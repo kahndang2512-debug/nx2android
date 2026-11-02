@@ -1,15 +1,21 @@
 name: Build and Capture Shaders on macOS
 
 on:
-  workflow_dispatch: # Cho phép bấm chạy thủ công bằng tay
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest # Máy ảo macOS chạy chip Apple Silicon của GitHub
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Setup .NET and Dependencies
         uses: actions/setup-dotnet@v4
@@ -20,18 +26,24 @@ jobs:
         run: |
           mkdir -p ~/.switch
           echo "${{ secrets.PROD_KEYS }}" > ~/.switch/prod.keys
-          
-      - name: Download ROMs from Google Drive Folder
+
+      - name: Setup and Download ROMs
         run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install gdown
+
           mkdir -p game_input
+          echo "Dang tai toan bo file ROM tu Google Drive..."
           python3 -m gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/
+          
+          echo "Danh sach cac file da tai ve:"
           ls -la game_input/
 
       - name: Run Shader Capture & Port Step
         run: |
           echo "Starting shader capture process..."
-          # Lệnh thực thi script port của dự án trên môi trường Mac
-          python3 port.py --game-id 010055D00F78000 --platform android
+          # Neu repo dung script khac port.py thi thay the ten file tai day
+          python3 port.py --input game_input/ --platform android
 
       - name: Upload Output Artifacts
         uses: actions/upload-artifact@v4
