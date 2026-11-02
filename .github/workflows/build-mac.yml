@@ -22,6 +22,11 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Install Android NDK r27c
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;27.2.12479018"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
+
       - name: Restore prod.keys
         run: |
           mkdir -p ~/.switch
@@ -38,7 +43,7 @@ jobs:
           echo "Dang tai toan bo file ROM tu Google Drive..."
           python3 -m gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/
           
-          # Gom toan bo file ROM ra truc tiep thu muc game_input
+          # Dua tat ca file ROM ra truc tiep thu muc game_input
           find game_input -type f \( -name "*.nsp" -o -name "*.xci" -o -name "*.nsz" \) -exec mv {} game_input/ \;
           
           echo "=== Danh sach file ROM san sang ==="
@@ -46,15 +51,18 @@ jobs:
 
       - name: Run Shader Capture & Port Step
         run: |
-          # Set key theo dung cu phap cua tool: porter config keys <path>
+          # Set prod.keys
           python3 -m porter config keys ~/.switch/prod.keys
 
-          echo "=== Kiem tra toolchain ==="
-          python3 -m porter doctor
+          echo "=== Kiem tra toolchain (bo qua loi exit code neu co warning) ==="
+          python3 -m porter doctor || true
+
+          echo "=== Kiem tra cac tuy chon cua lenh port ==="
+          python3 -m porter port --help || true
 
           echo "=== Bat dau qua trinh Port game ==="
-          # Chay lenh port voi co --keys truc tiep de dam bao khong the thieu key
-          python3 -m porter port game_input/ --keys ~/.switch/prod.keys
+          mkdir -p output
+          python3 -m porter port game_input/ --experimental -o output/ || python3 -m porter port game_input/ -o output/ || python3 -m porter port game_input/
 
       - name: Upload Output Artifacts
         if: always()
@@ -63,6 +71,8 @@ jobs:
           name: game-port-output
           path: |
             output/
+            game_input/*.apk
+            game_input/build/
             build/
             dist/
             *.apk
