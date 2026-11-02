@@ -1,0 +1,34 @@
+name: Build and Capture Shaders on macOS
+
+on:
+  workflow_dispatch: # Cho phép bấm chạy thủ công bằng tay
+
+jobs:
+  build:
+    runs-on: macos-latest # Máy ảo macOS chạy chip Apple Silicon của GitHub
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET and Dependencies
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore prod.keys
+        run: |
+          mkdir -p ~/.switch
+          echo "${{ secrets.PROD_KEYS }}" > ~/.switch/prod.keys
+
+      - name: Run Shader Capture & Port Step
+        run: |
+          echo "Starting shader capture process..."
+          # Lệnh thực thi script port của dự án trên môi trường Mac
+          python3 port.py --game-id 010055D00F78000 --platform android
+
+      - name: Upload Output Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-port-output
+          path: output/
