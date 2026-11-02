@@ -22,18 +22,11 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore prod.keys to macOS standard paths
+      - name: Restore prod.keys
         run: |
-          # Tao tat ca cac duong dan chua keys mac dinh tren macOS
           mkdir -p ~/.switch
-          mkdir -p "$HOME/Library/Application Support/yuzu/keys"
-          mkdir -p "$HOME/Library/Application Support/Ryujinx/system"
-
-          # Ghi prod.keys vao cac vi tri
           echo "${{ secrets.PROD_KEYS }}" > ~/.switch/prod.keys
-          echo "${{ secrets.PROD_KEYS }}" > "$HOME/Library/Application Support/yuzu/keys/prod.keys"
-          echo "${{ secrets.PROD_KEYS }}" > "$HOME/Library/Application Support/Ryujinx/system/prod.keys"
-          cp ~/.switch/prod.keys ./prod.keys
+          echo "${{ secrets.PROD_KEYS }}" > ./prod.keys
 
       - name: Setup and Download ROMs
         run: |
@@ -53,15 +46,15 @@ jobs:
 
       - name: Run Shader Capture & Port Step
         run: |
-          # Cau hinh duong dan keys neu tool co ho tro lenh config
-          python3 -m porter config set prod_keys "$HOME/.switch/prod.keys" || true
+          # Set key theo dung cu phap cua tool: porter config keys <path>
+          python3 -m porter config keys ~/.switch/prod.keys
 
-          echo "=== Kiem tra lai toolchain sau khi fix keys ==="
-          python3 -m porter doctor || true
+          echo "=== Kiem tra toolchain ==="
+          python3 -m porter doctor
 
           echo "=== Bat dau qua trinh Port game ==="
-          # Chay lenh port voi tat ca file NSP tim thay
-          python3 -m porter port game_input/
+          # Chay lenh port voi co --keys truc tiep de dam bao khong the thieu key
+          python3 -m porter port game_input/ --keys ~/.switch/prod.keys
 
       - name: Upload Output Artifacts
         if: always()
