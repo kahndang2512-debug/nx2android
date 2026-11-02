@@ -41,9 +41,10 @@ jobs:
 
       - name: Run Shader Capture & Port Step
         run: |
-          echo "Starting shader capture process..."
-          # Neu repo dung script khac port.py thi thay the ten file tai day
-          python3 port.py --input game_input/ --platform android
+          echo "=== Danh sach cac file trong thu muc repo ==="
+          ls -la
+          echo "=== Danh sach cac file python hoac script ==="
+          find . -maxdepth 2 -name "*.py" -o -name "*.sh" -o -name "*.sln" -o -name "*.csproj"
 
       - name: Upload Output Artifacts
         uses: actions/upload-artifact@v4
