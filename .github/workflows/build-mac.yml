@@ -30,28 +30,35 @@ jobs:
       - name: Setup and Download ROMs
         run: |
           python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
           python3 -m pip install gdown
 
           mkdir -p game_input
           echo "Dang tai toan bo file ROM tu Google Drive..."
           python3 -m gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/
           
-          echo "Danh sach cac file da tai ve:"
-          ls -la game_input/
+          # Tim va dua tat ca file NSP/XCI ra truc tiep thu muc game_input
+          find game_input -type f \( -name "*.nsp" -o -name "*.xci" -o -name "*.nsz" \) -exec mv {} game_input/ \;
+          
+          echo "=== Danh sach file ROM san sang de port ==="
+          ls -lh game_input/
 
       - name: Run Shader Capture & Port Step
         run: |
-          echo "=== Huong dan build tu CLAUDE.md ==="
-          cat CLAUDE.md | head -n 45
+          echo "=== Kiem tra toolchain va cau hinh ==="
+          python3 -m porter doctor || true
 
-          echo "=== Kiem tra file ROM trong game_input ==="
-          ls -lh game_input/
-
-          echo "=== Chay tien trinh porting bang python3 ==="
-          python3 -m porter --input game_input/ || python3 ./packaging/nx2android.py
+          echo "=== Bat dau qua trinh Port game ==="
+          # Chay lenh port chinh thuc voi thu muc chua game
+          python3 -m porter port game_input/
 
       - name: Upload Output Artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: game-port-output
-          path: output/
+          path: |
+            output/
+            build/
+            dist/
+            *.apk
