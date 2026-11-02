@@ -23,13 +23,12 @@ jobs:
           
       - name: Install gdown
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install gdown
+          python3 -m pip install --upgrade pip --break-system-packages
+          python3 -m pip install gdown --break-system-packages
 
       - name: Download ROMs from Google Drive Folder
         run: |
           mkdir -p game_input
-          # Chạy gdown dưới dạng module python để tránh lỗi biến môi trường PATH (exit code 127)
           python3 -m gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/ --remaining-ok
           ls -la game_input/
 
