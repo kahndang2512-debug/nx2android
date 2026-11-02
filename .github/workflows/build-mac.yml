@@ -33,33 +33,40 @@ jobs:
           echo "${{ secrets.PROD_KEYS }}" > ~/.switch/prod.keys
           echo "${{ secrets.PROD_KEYS }}" > ./prod.keys
 
-      - name: Setup and Download ROMs
+      - name: Cache Game ROMs
+        id: cache-roms
+        uses: actions/cache@v4
+        with:
+          path: game_input
+          key: switch-roms-cache-v1
+
+      - name: Setup Dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
           python3 -m pip install gdown
 
+      - name: Download ROMs (Only if not cached)
+        if: steps.cache-roms.outputs.cache-hit != 'true'
+        run: |
           mkdir -p game_input
-          echo "Dang tai toan bo file ROM tu Google Drive..."
+          echo "Dang tai file ROM tu Google Drive (lan dau)..."
           python3 -m gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/
-          
           find game_input -type f \( -name "*.nsp" -o -name "*.xci" -o -name "*.nsz" \) -exec mv {} game_input/ \;
+
+      - name: Verify ROMs
+        run: |
+          echo "=== Danh sach file ROM trong game_input ==="
           ls -lh game_input/
 
       - name: Inspect and Bypass Mac Host Check
         run: |
           echo "=== Kiem tra doan code chan Mac host trong porter ==="
-          grep -rn "needs a step that boots the game in the Mac host" porter/ nxnative/ || true
+          grep -rn "needs a step that boots the game in the Mac host" porter/ || true
 
-          echo "=== Kiem tra cac cong cu trong nxnative ==="
-          ls -la nxnative/
-          find nxnative/ -maxdepth 3 -name "*.py" -o -name "*.sh" -o -name "Makefile" -o -name "CMakeLists.txt"
-
-          # Vo hieu hoa chot chan return/exit khi gap canh bao Mac host trong porter/pipeline.py
           python3 -c '
           with open("porter/pipeline.py", "r") as f:
               code = f.read()
-          # Thay the lenh dung (raise / return) ngay sau canh bao needs a step that boots
           import re
           patched = re.sub(r"(needs a step that boots the game in the Mac host.*?)\n(\s+)(return|raise )[^\n]+", r"\1\n\2pass # bypassed", code, flags=re.DOTALL)
           with open("porter/pipeline.py", "w") as f:
@@ -71,10 +78,7 @@ jobs:
           python3 -m porter config keys ~/.switch/prod.keys
           python3 -m porter doctor || true
 
-          echo "=== Danh sach cac game da ho tro hoan chinh ==="
-          python3 -m porter profiles || true
-
-          echo "=== Bat dau qua trinh Port game (kem co --experimental) ==="
+          echo "=== Bat dau qua trinh Port game ==="
           mkdir -p output
           python3 -m porter port game_input/ --experimental -o output/
 
