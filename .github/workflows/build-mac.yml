@@ -20,6 +20,12 @@ jobs:
         run: |
           mkdir -p ~/.switch
           echo "${{ secrets.PROD_KEYS }}" > ~/.switch/prod.keys
+          
+      - name: Download ROMs from Google Drive Folder
+        run: |
+          mkdir -p game_input
+          gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/ --remaining-ok
+          ls -la game_input/
 
       - name: Run Shader Capture & Port Step
         run: |
