@@ -1,0 +1,54 @@
+name: Build and Capture Shaders on macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup .NET and Dependencies
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install gdown
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install gdown
+
+      - name: Restore prod.keys
+        run: |
+          mkdir -p ~/.switch
+          echo "${{ secrets.PROD_KEYS }}" > ~/.switch/prod.keys
+
+      - name: Download ROMs from Google Drive Folder
+        run: |
+          echo "Dang tai toan bo file ROM tu thu muc Google Drive..."
+          mkdir -p game_input
+          # Tai toan bo thu muc Drive va bo qua xac nhan virus
+          gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/
+          
+          echo "Danh sach cac file da tai ve:"
+          ls -lh game_input/
+
+      - name: Run Shader Capture & Port Step
+        run: |
+          echo "Starting shader capture process..."
+          # Chay tool voi thu muc chua file NSP vua tai
+          python3 port.py --input game_input/ --platform android
+
+      - name: Upload Output Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-port-output
+          path: output/
