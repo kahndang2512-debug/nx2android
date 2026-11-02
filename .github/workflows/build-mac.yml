@@ -41,15 +41,14 @@ jobs:
 
       - name: Run Shader Capture & Port Step
         run: |
-          echo "=== Cai dat requirements cua repo ==="
-          python3 -m pip install -r requirements.txt
+          echo "=== Huong dan build tu CLAUDE.md ==="
+          cat CLAUDE.md | head -n 45
 
-          echo "=== Kiem tra huong dan lenh porter ==="
-          python3 -m porter.cli --help || python3 -m porter --help
+          echo "=== Kiem tra file ROM trong game_input ==="
+          ls -lh game_input/
 
-          echo "=== Chay tien trinh port cho thu muc game_input ==="
-          # Chay pipeline voi game da tai ve
-          python3 -m porter.cli --input game_input/ || python3 ./packaging/nx2android.py --help
+          echo "=== Chay tien trinh porting bang python3 ==="
+          python3 -m porter --input game_input/ || python3 ./packaging/nx2android.py
 
       - name: Upload Output Artifacts
         uses: actions/upload-artifact@v4
