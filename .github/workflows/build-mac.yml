@@ -38,27 +38,40 @@ jobs:
         uses: actions/cache@v4
         with:
           path: game_input
-          key: switch-roms-cache-v2
+          key: switch-roms-cache-v3
 
       - name: Setup Dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
 
-      - name: Download ROMs via Google Drive API (Bypass Quota)
+      - name: Download ROMs via Google Drive API
         if: steps.cache-roms.outputs.cache-hit != 'true'
         run: |
+          rm -rf game_input
           mkdir -p game_input
-          echo "=== Dang tai Base Game qua Google Drive API ==="
-          curl -L -sS "https://www.googleapis.com/drive/v3/files/1gWNfN8Y85OJSPhRNFxiTPvSwstrClrGH?alt=media&key=${{ secrets.GDRIVE_API_KEY }}" -o "game_input/base.nsp"
           
-          echo "=== Dang tai Update Game qua Google Drive API ==="
-          curl -L -sS "https://www.googleapis.com/drive/v3/files/1lIcpWHKQdgMElTi4WNHk_ysgGSycUAhN?alt=media&key=${{ secrets.GDRIVE_API_KEY }}" -o "game_input/update.nsp"
+          echo "=== Dang tai Base Game [0100F43008C44000][v0] ==="
+          curl -L "https://www.googleapis.com/drive/v3/files/1gWNfN8Y85OJSPhRNFxiTPvSwstrClrGH?alt=media&acknowledgeAbuse=true&key=${{ secrets.GDRIVE_API_KEY }}" \
+            -o "game_input/Pokemon_Legends_Z-A_[0100F43008C44000][v0].nsp"
+          
+          echo "=== Dang tai Update Game [0100F43008C44000][v393216] ==="
+          curl -L "https://www.googleapis.com/drive/v3/files/1lIcpWHKQdgMElTi4WNHk_ysgGSycUAhN?alt=media&acknowledgeAbuse=true&key=${{ secrets.GDRIVE_API_KEY }}" \
+            -o "game_input/Pokemon_Legends_Z-A_[0100F43008C44000][v393216].nsp"
 
       - name: Verify Downloaded ROMs
         run: |
           echo "=== Kiem tra dung luong file sau khi tai ==="
           ls -lh game_input/
+          # Neu file nho hon 1MB (tuc la tai loi ra text JSON), in noi dung loi ra de kiem tra
+          for f in game_input/*.nsp; do
+            size=$(wc -c < "$f")
+            if [ "$size" -lt 1000000 ]; then
+              echo "Loi tai file $f (dung luong chi $size bytes). Noi dung tra ve tu Google:"
+              cat "$f"
+              exit 1
+            fi
+          done
 
       - name: Inspect and Bypass Mac Host Check
         run: |
