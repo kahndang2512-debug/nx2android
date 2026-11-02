@@ -21,15 +21,10 @@ jobs:
           mkdir -p ~/.switch
           echo "${{ secrets.PROD_KEYS }}" > ~/.switch/prod.keys
           
-      - name: Install gdown
-        run: |
-          python3 -m pip install --upgrade pip --break-system-packages
-          python3 -m pip install gdown --break-system-packages
-
       - name: Download ROMs from Google Drive Folder
         run: |
           mkdir -p game_input
-          python3 -m gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/ --remaining-ok
+          python3 -m gdown --folder "https://drive.google.com/drive/folders/1CZRqalhkkgWDzJL-wkJRhc7FwzWM6zXK" -O game_input/
           ls -la game_input/
 
       - name: Run Shader Capture & Port Step
